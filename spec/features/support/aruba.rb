@@ -10,7 +10,7 @@ end
 
 module ConfigurationHelpers
   def config_path
-    File.expand_path("~/.imap-backup")
+    Imap::Backup::Configuration.default_pathname
   end
 
   def create_config(accounts:, debug: false)
