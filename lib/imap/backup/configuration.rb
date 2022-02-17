@@ -1,30 +1,35 @@
 require "json"
 require "os"
+require "xdg"
 
 require "imap/backup/account"
 
 module Imap::Backup
   class Configuration
-    CONFIGURATION_DIRECTORY = File.expand_path("~/.imap-backup")
     VERSION = "2.0".freeze
+    DEFAULT_DOWNLOAD_BLOCK_SIZE = 1
 
     attr_reader :pathname
 
     def self.default_pathname
-      File.join(CONFIGURATION_DIRECTORY, "config.json")
+      xdg = XDG::Environment.new
+      File.join(xdg.config_home, "imap-backup", "config.json")
     end
 
-    def self.exist?(pathname = default_pathname)
-      File.exist?(pathname)
+    def self.supported_pathnames
+      old_base = File.expand_path("~/.imap-backup")
+      old_path = File.join(old_base, "config.json")
+      [default_pathname, old_path]
     end
 
-    def initialize(pathname = self.class.default_pathname)
-      @pathname = pathname
+    def initialize
+      @pathname = self.class.default_pathname
       @saved_debug = nil
       @debug = nil
     end
 
     def path
+      ensure_loaded!
       File.dirname(pathname)
     end
 
@@ -81,13 +86,23 @@ module Imap::Backup
 
     def data
       @data ||=
-        if File.exist?(pathname)
-          Utils.check_permissions(pathname, 0o600) if !windows?
-          contents = File.read(pathname)
-          JSON.parse(contents, symbolize_names: true)
-        else
-          {accounts: []}
+        begin
+          pathname = find_existing_or_use_default
+          if File.exist?(pathname)
+            Utils.check_permissions(pathname, 0o600) if !windows?
+            contents = File.read(pathname)
+            JSON.parse(contents, symbolize_names: true)
+          else
+            {accounts: []}
+          end
         end
+    end
+
+    def find_existing_or_use_default
+      self.class.supported_pathnames.each do |path|
+        return path if File.exist?(path)
+      end
+      self.class.default_pathname
     end
 
     def remove_modified_flags

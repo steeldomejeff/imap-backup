@@ -59,7 +59,7 @@ specific folders.
 
 ## Configuration file
 
-`setup` creates the file `~/.imap-backup/config.json`
+`setup` creates the file `~/.config/imap-backup/config.json`
 
 E.g.:
 
@@ -133,7 +133,7 @@ Specifically, if you are using a self-signed certificate and get SSL errors, e.g
 Note that email usernames and passwords are held in plain text
 in the configuration file.
 
-The directory ~/.imap-backup, the configuration file and all backup
+The directory ~/.config/imap-backup, the configuration file and all backup
 directories have their access permissions set to only allow access
 by your user. This is not done on Windows - see below.
 
